@@ -1,0 +1,55 @@
+# IDE (local machine settings)
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Secrets (not used yet — ignore if someone adds later)
+.env
+.env.local
+.env.*.local
+
+# Python (backend)
+__pycache__/
+*.py[cod]
+*$py.class
+.Python
+.venv/
+venv/
+env/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+*.egg-info/
+dist/
+build/
+
+# Node / Next.js (frontend)
+node_modules/
+frontend/.next/
+frontend/out/
+frontend/build/
+*.tsbuildinfo
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# Database & local data (DB is created on first backend start)
+*.db
+*.sqlite
+*.sqlite3
+backend/uploads/
+
+# YOLO weights: commit backend/yolov8n.pt for offline setup, or omit and let ultralytics download on first run
+# *.pt
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Logs
+*.log
+logs/

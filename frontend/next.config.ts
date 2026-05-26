@@ -1,8 +1,12 @@
 import type { NextConfig } from "next";
 
+const devAllowedOrigins = process.env.NEXT_DEV_ALLOWED_ORIGINS?.split(",")
+  .map((origin) => origin.trim())
+  .filter(Boolean);
+
 const nextConfig: NextConfig = {
   output: "standalone",
-  allowedDevOrigins: ["192.168.0.15"],
+  ...(devAllowedOrigins?.length ? { allowedDevOrigins: devAllowedOrigins } : {}),
   headers: async () => [
     {
       source: "/sw.js",

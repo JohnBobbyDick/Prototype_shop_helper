@@ -1,9 +1,14 @@
 import io
 import logging
 import time
+from pathlib import Path
+
 from PIL import Image
 
 logger = logging.getLogger(__name__)
+
+_BACKEND_DIR = Path(__file__).resolve().parent.parent.parent
+_MODEL_PATH = _BACKEND_DIR / "yolov8n.pt"
 
 PRODUCT_CLASSES = {
     46: {
@@ -34,9 +39,10 @@ class ProductDetector:
     def __init__(self):
         from ultralytics import YOLO
 
-        logger.info("Loading YOLOv8n model...")
+        model_ref = str(_MODEL_PATH) if _MODEL_PATH.exists() else "yolov8n.pt"
+        logger.info("Loading YOLOv8n model from %s...", model_ref)
         t0 = time.time()
-        self.model = YOLO("yolov8n.pt")
+        self.model = YOLO(model_ref)
         logger.info("YOLOv8n loaded in %.1fs", time.time() - t0)
 
     def detect(self, image_bytes: bytes) -> dict:

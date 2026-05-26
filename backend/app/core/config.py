@@ -15,7 +15,7 @@ class Settings(BaseSettings):
     CORS_ORIGIN_REGEX: str = r"^https?://(localhost|127\.0\.0\.1|192\.168\.\d{1,3}\.\d{1,3}|10\.\d{1,3}\.\d{1,3}\.\d{1,3})(:\d+)?$"
     UPLOAD_DIR: str = str(Path(__file__).resolve().parent.parent.parent / "uploads")
 
-    model_config = {"env_file": ".env", "extra": "ignore"}
+    model_config = {"extra": "ignore"}
 
 
 settings = Settings()
