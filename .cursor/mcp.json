@@ -1,0 +1,16 @@
+{
+  "mcpServers": {
+    "context7": {
+      "command": "npx",
+      "args": ["-y", "@upstash/context7-mcp@latest"]
+    },
+    "sqlite": {
+      "command": "npx",
+      "args": ["-y", "@anthropic/mcp-sqlite@latest", "--db-path", "./backend/shopsee.db"]
+    },
+    "playwright": {
+      "command": "npx",
+      "args": ["-y", "@anthropic/mcp-playwright@latest"]
+    }
+  }
+}
