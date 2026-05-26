@@ -1,0 +1,50 @@
+{
+  "app": {
+    "name": "ShopSee",
+    "tagline": "Помощник в магазине"
+  },
+  "nav": {
+    "camera": "Камера",
+    "history": "История",
+    "settings": "Настройки"
+  },
+  "camera": {
+    "title": "Сканирование",
+    "scan": "Сканировать",
+    "scanning": "Анализ...",
+    "pointCamera": "Наведите камеру на товар",
+    "cameraError": "Не удалось получить доступ к камере",
+    "cameraPermission": "Разрешите доступ к камере для работы приложения",
+    "retry": "Повторить"
+  },
+  "result": {
+    "category": "Категория",
+    "product": "Продукт",
+    "confidence": "Уверенность",
+    "repeatVoice": "Озвучить снова",
+    "scanAgain": "Сканировать ещё"
+  },
+  "history": {
+    "title": "История сканирований",
+    "empty": "Здесь пока пусто",
+    "emptyDesc": "Отсканируйте товар, и он появится здесь",
+    "clear": "Очистить историю",
+    "clearConfirm": "Вы уверены? Вся история будет удалена."
+  },
+  "settings": {
+    "title": "Настройки",
+    "language": "Язык",
+    "voice": "Голосовое сопровождение",
+    "voiceSpeed": "Скорость голоса",
+    "voiceSpeedSlow": "Медленно",
+    "voiceSpeedNormal": "Нормально",
+    "voiceSpeedFast": "Быстро",
+    "fontSize": "Размер текста",
+    "fontSizeNormal": "Обычный",
+    "fontSizeLarge": "Крупный",
+    "fontSizeXlarge": "Очень крупный",
+    "highContrast": "Высокий контраст",
+    "appearance": "Оформление",
+    "accessibility": "Доступность"
+  }
+}

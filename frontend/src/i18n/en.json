@@ -1,0 +1,50 @@
+{
+  "app": {
+    "name": "ShopSee",
+    "tagline": "Your store assistant"
+  },
+  "nav": {
+    "camera": "Camera",
+    "history": "History",
+    "settings": "Settings"
+  },
+  "camera": {
+    "title": "Scan",
+    "scan": "Scan",
+    "scanning": "Analyzing...",
+    "pointCamera": "Point camera at a product",
+    "cameraError": "Could not access camera",
+    "cameraPermission": "Allow camera access to use the app",
+    "retry": "Retry"
+  },
+  "result": {
+    "category": "Category",
+    "product": "Product",
+    "confidence": "Confidence",
+    "repeatVoice": "Repeat voice",
+    "scanAgain": "Scan again"
+  },
+  "history": {
+    "title": "Scan History",
+    "empty": "Nothing here yet",
+    "emptyDesc": "Scan a product and it will appear here",
+    "clear": "Clear history",
+    "clearConfirm": "Are you sure? All history will be deleted."
+  },
+  "settings": {
+    "title": "Settings",
+    "language": "Language",
+    "voice": "Voice narration",
+    "voiceSpeed": "Voice speed",
+    "voiceSpeedSlow": "Slow",
+    "voiceSpeedNormal": "Normal",
+    "voiceSpeedFast": "Fast",
+    "fontSize": "Font size",
+    "fontSizeNormal": "Normal",
+    "fontSizeLarge": "Large",
+    "fontSizeXlarge": "Extra large",
+    "highContrast": "High contrast",
+    "appearance": "Appearance",
+    "accessibility": "Accessibility"
+  }
+}
