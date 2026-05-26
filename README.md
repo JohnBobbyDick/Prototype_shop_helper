@@ -23,7 +23,7 @@ pip install -r requirements.txt
 python -m uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
 ```
 
-Дождитесь в консоли: `Detection model READY`.
+Дождитесь: `Detection model READY`.
 
 **Терминал 2 — фронтенд:**
 
@@ -35,31 +35,55 @@ npm run dev
 
 Откройте http://localhost:3000
 
-**Проверка:** http://127.0.0.1:8000/api/health → `"status":"ok"`, `"detector_ready":true`
+**Проверка:** http://127.0.0.1:8000/api/health → `"detector_ready": true`
 
-Файлы `.env` **не нужны** — всё работает из коробки.
+`.env` не нужен.
 
 ### macOS / Linux
 
 ```bash
 cd backend && python3 -m venv .venv && source .venv/bin/activate
-pip install -r requirements.txt
-uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+pip install -r requirements.txt && uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
 ```
 
 ```bash
 cd frontend && npm install && npm run dev
 ```
 
-## Что в репозитории, а что локально
+## Что общее для всех, а что локальное
 
-| В Git (общее для всех) | Только на вашем ПК |
-|------------------------|-------------------|
-| Код `frontend/` и `backend/` | `node_modules/`, `frontend/.next/` |
-| `backend/yolov8n.pt` (модель) | `backend/.venv/` |
-| `.cursor/` (для Cursor) | **`backend/shopsee.db`** — история и настройки |
+### Одинаково у всех (лежит в Git, в коде)
 
-**База `shopsee.db` у каждого своя.** После `git clone` она создаётся при первом запуске бэкенда. История сканов и настройки (язык, голос) не синхронизируются через Git — это нормально.
+Стартовые настройки доступности задаются **один раз в репозитории**:
+
+| Параметр | Значение по умолчанию |
+|----------|------------------------|
+| Язык | `ru` |
+| Голос | включён |
+| Скорость голоса | `1.0` |
+| Шрифт | `large` (крупный) |
+| Высокий контраст | включён |
+
+Файл: `backend/app/core/defaults.py` (зеркало: `frontend/src/lib/defaults.ts`).
+
+После `git clone` и первого запуска бэкенда каждый получает **те же** стартовые настройки.
+
+Код, модель YOLO (`backend/yolov8n.pt`), `.cursor/` — тоже общие.
+
+### Локально на каждом ПК (не в Git)
+
+Файл `backend/shopsee.db` создаётся сам при первом запуске:
+
+| Таблица | Зачем | В Git? |
+|---------|--------|--------|
+| **История сканов** | Тестовые/личные сканы на этой машине | Нет |
+| **Настройки** | Копия дефолтов из кода; меняется, если пользователь крутил ползунки в приложении | Нет |
+
+Историю сканов **не** синхронизируем — у каждого разработчика свои тестовые данные.
+
+Настройки **по умолчанию одинаковые**; в Git не кладём базу, потому что там ещё история и возможные локальные правки в UI.
+
+Сброс к заводским настройкам: удалить `backend/shopsee.db` и перезапустить бэкенд.
 
 ## Обновление проекта
 
@@ -67,29 +91,30 @@ cd frontend && npm install && npm run dev
 git pull
 ```
 
-Затем при необходимости:
+При изменении зависимостей:
 
 ```powershell
-# если менялся backend/requirements.txt
 cd backend
 .\.venv\Scripts\Activate.ps1
 pip install -r requirements.txt
 
-# если менялся frontend/package.json
-cd frontend
+cd ..\frontend
 npm install
 ```
 
 Перезапустите оба сервера.
 
+Если в `defaults.py` поменяли дефолты и нужно увидеть их у себя — удалите `backend/shopsee.db` и перезапустите бэкенд.
+
 ## Структура
 
 ```
 shopsee/
-├── frontend/       # Next.js PWA
-├── backend/        # FastAPI + YOLO
+├── frontend/
+├── backend/
+│   ├── app/core/defaults.py   # стартовые настройки для всех
 │   └── yolov8n.pt
-├── .cursor/        # skills для Cursor (опционально)
+├── .cursor/
 └── README.md
 ```
 
@@ -97,10 +122,14 @@ shopsee/
 
 | Симптом | Решение |
 |---------|---------|
-| `detector_ready: false` | `pip install -r requirements.txt`, интернет для скачивания модели |
-| Ошибки API / CORS | Бэкенд с `--host 0.0.0.0`, порты 8000 и 3000 не заблокированы |
-| Сломалась БД | Удалить `backend/shopsee.db`, перезапустить бэкенд |
+| `detector_ready: false` | `pip install -r requirements.txt` |
+| Ошибки API | Бэкенд с `--host 0.0.0.0` |
+| Пустые настройки / ошибка БД | Удалить `backend/shopsee.db`, перезапустить бэкенд |
 
 ## Для мейнтейнера
 
-Пушите в `main` — команда делает `git pull`, переустанавливает зависимости при изменении `requirements.txt` / `package-lock.json`, перезапускает серверы. Личные данные (`shopsee.db`, кэши) в коммиты не попадают.
+Пушите код в `main`. Команда: `git pull` → при необходимости `pip` / `npm install` → перезапуск.
+
+Меняете дефолты голоса/шрифта — правьте `backend/app/core/defaults.py` и `frontend/src/lib/defaults.ts` (значения должны совпадать).
+
+В коммиты не попадают: `shopsee.db`, `node_modules/`, `.next/`, `.venv/`.

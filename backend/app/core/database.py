@@ -18,6 +18,9 @@ async def get_db() -> AsyncSession:  # type: ignore[misc]
 
 async def init_db() -> None:
     import app.models.models  # noqa: F401 — register tables on Base.metadata
+    from app.core.seed import seed_default_settings
 
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
+
+    await seed_default_settings()

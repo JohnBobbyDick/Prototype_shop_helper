@@ -3,6 +3,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
+from app.core.defaults import default_settings_kwargs
 from app.models.models import UserSettings
 from app.schemas.schemas import UserSettingsResponse, UserSettingsUpdate
 
@@ -13,7 +14,7 @@ async def _get_or_create_settings(db: AsyncSession) -> UserSettings:
     result = await db.execute(select(UserSettings).limit(1))
     settings = result.scalar_one_or_none()
     if not settings:
-        settings = UserSettings()
+        settings = UserSettings(**default_settings_kwargs())
         db.add(settings)
         await db.commit()
         await db.refresh(settings)

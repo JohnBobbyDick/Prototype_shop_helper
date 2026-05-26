@@ -2,19 +2,11 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { api, type UserSettings } from "@/lib/api";
+import { DEFAULT_USER_SETTINGS } from "@/lib/defaults";
 import type { Locale } from "@/i18n";
 
-const DEFAULT_SETTINGS: UserSettings = {
-  id: 0,
-  language: "ru",
-  voice_enabled: true,
-  voice_speed: 1.0,
-  high_contrast: true,
-  font_size: "large",
-};
-
 export function useSettings() {
-  const [settings, setSettings] = useState<UserSettings>(DEFAULT_SETTINGS);
+  const [settings, setSettings] = useState<UserSettings>({ ...DEFAULT_USER_SETTINGS });
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
