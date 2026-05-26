@@ -4,16 +4,23 @@ PWA для людей с нарушениями зрения: камера → �
 
 **Стек:** Next.js 16 · FastAPI · SQLite · YOLOv8
 
-## Для участников команды (clone → run)
+---
 
-Нужно: **Node.js 20+**, **Python 3.10+**, **Git**.
+## Быстрый запуск
+
+**Нужно:** Node.js 20+, Python 3.10+.
+
+### 1. Бэкенд (FastAPI + YOLO)
+
+В PowerShell:
 
 ```powershell
-git clone <url-репозитория>
-cd shopsee
+cd backend
+.\.venv\Scripts\Activate.ps1
+python -m uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
 ```
 
-**Терминал 1 — бэкенд:**
+Первый раз (если ещё нет `.venv`):
 
 ```powershell
 cd backend
@@ -23,9 +30,15 @@ pip install -r requirements.txt
 python -m uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
 ```
 
-Дождитесь: `Detection model READY`.
+Дождитесь в консоли: `Detection model READY`.
 
-**Терминал 2 — фронтенд:**
+**Проверка:** http://127.0.0.1:8000/api/health → `"status":"ok"`, `"detector_ready":true`
+
+> Модель `yolov8n.pt` уже в репозитории. Если файла нет — скачается при первом запуске (нужен интернет).
+
+### 2. Фронтенд (Next.js)
+
+В **другом** окне терминала:
 
 ```powershell
 cd frontend
@@ -35,65 +48,36 @@ npm run dev
 
 Откройте http://localhost:3000
 
-**Проверка:** http://127.0.0.1:8000/api/health → `"detector_ready": true`
+---
 
-`.env` не нужен.
+**Первый clone проекта:**
+
+```powershell
+git clone <url-репозитория>
+cd shopsee
+```
+
+Затем шаги 1 и 2 выше. Файл `.env` не нужен.
 
 ### macOS / Linux
 
 ```bash
+# бэкенд
 cd backend && python3 -m venv .venv && source .venv/bin/activate
-pip install -r requirements.txt && uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
-```
+pip install -r requirements.txt
+uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
 
-```bash
+# фронтенд (другой терминал)
 cd frontend && npm install && npm run dev
 ```
 
-## Что общее для всех, а что локальное
+---
 
-### Одинаково у всех (лежит в Git, в коде)
-
-Стартовые настройки доступности задаются **один раз в репозитории**:
-
-| Параметр | Значение по умолчанию |
-|----------|------------------------|
-| Язык | `ru` |
-| Голос | включён |
-| Скорость голоса | `1.0` |
-| Шрифт | `large` (крупный) |
-| Высокий контраст | включён |
-
-Файл: `backend/app/core/defaults.py` (зеркало: `frontend/src/lib/defaults.ts`).
-
-После `git clone` и первого запуска бэкенда каждый получает **те же** стартовые настройки.
-
-Код, модель YOLO (`backend/yolov8n.pt`), `.cursor/` — тоже общие.
-
-### Локально на каждом ПК (не в Git)
-
-Файл `backend/shopsee.db` создаётся сам при первом запуске:
-
-| Таблица | Зачем | В Git? |
-|---------|--------|--------|
-| **История сканов** | Тестовые/личные сканы на этой машине | Нет |
-| **Настройки** | Копия дефолтов из кода; меняется, если пользователь крутил ползунки в приложении | Нет |
-
-Историю сканов **не** синхронизируем — у каждого разработчика свои тестовые данные.
-
-Настройки **по умолчанию одинаковые**; в Git не кладём базу, потому что там ещё история и возможные локальные правки в UI.
-
-Сброс к заводским настройкам: удалить `backend/shopsee.db` и перезапустить бэкенд.
-
-## Обновление проекта
+## Обновление (`git pull`)
 
 ```powershell
 git pull
-```
 
-При изменении зависимостей:
-
-```powershell
 cd backend
 .\.venv\Scripts\Activate.ps1
 pip install -r requirements.txt
@@ -104,32 +88,33 @@ npm install
 
 Перезапустите оба сервера.
 
-Если в `defaults.py` поменяли дефолты и нужно увидеть их у себя — удалите `backend/shopsee.db` и перезапустите бэкенд.
+---
 
-## Структура
+## Данные и настройки
 
-```
-shopsee/
-├── frontend/
-├── backend/
-│   ├── app/core/defaults.py   # стартовые настройки для всех
-│   └── yolov8n.pt
-├── .cursor/
-└── README.md
-```
+| В Git (одинаково у всех) | Только на вашем ПК |
+|--------------------------|-------------------|
+| Код, `yolov8n.pt` | `backend/shopsee.db` |
+| Дефолты: RU, голос вкл, шрифт large, контраст — `backend/app/core/defaults.py` | История сканов, правки в UI |
 
-## Если что-то не работает
+База создаётся сама при первом запуске бэкенда. В Git не коммитится.
 
-| Симптом | Решение |
-|---------|---------|
-| `detector_ready: false` | `pip install -r requirements.txt` |
-| Ошибки API | Бэкенд с `--host 0.0.0.0` |
-| Пустые настройки / ошибка БД | Удалить `backend/shopsee.db`, перезапустить бэкенд |
+Сброс настроек и истории: удалить `backend/shopsee.db` → перезапустить бэкенд.
+
+---
+
+## Если не работает
+
+| Проблема | Решение |
+|----------|---------|
+| `detector_ready: false` | `pip install -r requirements.txt`, проверить интернет |
+| Ошибки API / CORS | Бэкенд с `--host 0.0.0.0` |
+| Сломалась БД | Удалить `backend/shopsee.db`, перезапустить бэкенд |
+
+---
 
 ## Для мейнтейнера
 
-Пушите код в `main`. Команда: `git pull` → при необходимости `pip` / `npm install` → перезапуск.
+Пуш в `main` → команда делает `git pull` и перезапуск.
 
 Меняете дефолты голоса/шрифта — правьте `backend/app/core/defaults.py` и `frontend/src/lib/defaults.ts` (значения должны совпадать).
-
-В коммиты не попадают: `shopsee.db`, `node_modules/`, `.next/`, `.venv/`.
