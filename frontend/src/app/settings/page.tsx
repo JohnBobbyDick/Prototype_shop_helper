@@ -162,6 +162,49 @@ export default function SettingsPage() {
                 onCheckedChange={(v) => updateSettings({ voice_enabled: v })}
               />
             </Row>
+            <Row>
+              <div style={{ display: "flex", flexDirection: "column", gap: 10, width: "100%" }}>
+                <span style={{ fontSize: s(15), fontWeight: 600 }}>{dict.settings.voiceMode}</span>
+                <div style={{ display: "flex", gap: 6, width: "100%" }}>
+                  {(
+                    [
+                      { mode: "product" as const, label: dict.settings.voiceModeProduct },
+                      { mode: "department" as const, label: dict.settings.voiceModeDepartment },
+                    ] as const
+                  ).map(({ mode, label }) => {
+                    const active = settings.voice_mode === mode;
+                    return (
+                      <motion.button
+                        key={mode}
+                        whileTap={{ scale: 0.97 }}
+                        onClick={() => updateSettings({ voice_mode: mode })}
+                        disabled={!settings.voice_enabled}
+                        style={{
+                          flex: 1,
+                          height: 42,
+                          borderRadius: 11,
+                          fontSize: s(13),
+                          fontWeight: active ? 700 : 500,
+                          cursor: settings.voice_enabled ? "pointer" : "not-allowed",
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          gap: 4,
+                          border: "none",
+                          transition: "all 0.2s ease-out",
+                          opacity: settings.voice_enabled ? 1 : 0.45,
+                          background: active ? "oklch(0.65 0.24 264)" : "rgba(255,255,255,0.05)",
+                          color: active ? "white" : "oklch(0.7 0 0)",
+                        }}
+                      >
+                        {active && <Check style={{ width: 13, height: 13, flexShrink: 0 }} />}
+                        {label}
+                      </motion.button>
+                    );
+                  })}
+                </div>
+              </div>
+            </Row>
             <Row border={false}>
               <div style={{ display: "flex", flexDirection: "column", gap: 10, width: "100%" }}>
                 <div

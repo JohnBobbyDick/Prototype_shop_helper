@@ -12,7 +12,13 @@ export function useSettings() {
   useEffect(() => {
     api
       .getSettings()
-      .then(setSettings)
+      .then((s) =>
+        setSettings({
+          ...DEFAULT_USER_SETTINGS,
+          ...s,
+          voice_mode: s.voice_mode === "department" ? "department" : "product",
+        }),
+      )
       .catch(() => {})
       .finally(() => setLoading(false));
   }, []);
@@ -20,13 +26,22 @@ export function useSettings() {
   const updateSettings = useCallback(async (data: Partial<Omit<UserSettings, "id">>) => {
     try {
       const updated = await api.updateSettings(data);
-      setSettings(updated);
-      return updated;
+      const next: UserSettings = {
+        ...DEFAULT_USER_SETTINGS,
+        ...updated,
+        voice_mode: updated.voice_mode === "department" ? "department" : "product",
+      };
+      setSettings(next);
+      return next;
     } catch {
-      setSettings((prev) => ({ ...prev, ...data }));
-      return { ...settings, ...data } as UserSettings;
+      let next!: UserSettings;
+      setSettings((prev) => {
+        next = { ...prev, ...data } as UserSettings;
+        return next;
+      });
+      return next;
     }
-  }, [settings]);
+  }, []);
 
   const locale: Locale = (settings.language as Locale) || "ru";
 

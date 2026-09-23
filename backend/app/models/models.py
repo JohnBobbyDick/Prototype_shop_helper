@@ -28,6 +28,7 @@ class UserSettings(Base):
     language: Mapped[str] = mapped_column(String(5), default=_D.language, nullable=False)
     voice_enabled: Mapped[bool] = mapped_column(Boolean, default=_D.voice_enabled, nullable=False)
     voice_speed: Mapped[float] = mapped_column(Float, default=_D.voice_speed, nullable=False)
+    voice_mode: Mapped[str] = mapped_column(String(20), default=_D.voice_mode, nullable=False)
     high_contrast: Mapped[bool] = mapped_column(
         Boolean, default=_D.high_contrast, nullable=False
     )

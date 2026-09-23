@@ -27,6 +27,7 @@ class UserSettingsResponse(BaseModel):
     language: str
     voice_enabled: bool
     voice_speed: float
+    voice_mode: str
     high_contrast: bool
     font_size: str
 
@@ -37,5 +38,13 @@ class UserSettingsUpdate(BaseModel):
     language: str | None = None
     voice_enabled: bool | None = None
     voice_speed: float | None = Field(None, ge=0.5, le=2.0)
+    voice_mode: str | None = Field(None, pattern=r"^(product|department)$")
     high_contrast: bool | None = None
     font_size: str | None = Field(None, pattern=r"^(normal|large|xlarge)$")
+
+
+class HistoryCreateItem(BaseModel):
+    category: str
+    category_ru: str
+    product_detail: str | None = None
+    confidence: float = Field(ge=0, le=100)

@@ -11,6 +11,7 @@ class UserSettingsDefaults:
     language: str = "ru"
     voice_enabled: bool = True
     voice_speed: float = 1.0
+    voice_mode: str = "product"  # "product" | "department"
     high_contrast: bool = True
     font_size: str = "large"
 
@@ -24,6 +25,7 @@ def default_settings_kwargs() -> dict:
         "language": d.language,
         "voice_enabled": d.voice_enabled,
         "voice_speed": d.voice_speed,
+        "voice_mode": d.voice_mode,
         "high_contrast": d.high_contrast,
         "font_size": d.font_size,
     }

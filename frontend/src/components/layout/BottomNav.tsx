@@ -3,7 +3,6 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { ScanLine, Clock, SlidersHorizontal } from "lucide-react";
-import { motion } from "motion/react";
 import { useApp } from "@/components/providers";
 
 const NAV_ITEMS = [
@@ -80,15 +79,13 @@ export function BottomNav() {
                 aria-current={active ? "page" : undefined}
               >
                 {active && (
-                  <motion.div
-                    layoutId="nav-indicator"
+                  <div
                     style={{
                       position: "absolute",
                       inset: 0,
                       borderRadius: 16,
                       background: "oklch(0.65 0.24 264 / 10%)",
                     }}
-                    transition={{ type: "spring", stiffness: 500, damping: 32 }}
                   />
                 )}
                 <Icon

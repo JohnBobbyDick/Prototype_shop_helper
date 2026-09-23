@@ -41,13 +41,23 @@ export interface ScanHistoryItem {
   created_at: string;
 }
 
+export type VoiceMode = "product" | "department";
+
 export interface UserSettings {
   id: number;
   language: string;
   voice_enabled: boolean;
   voice_speed: number;
+  voice_mode: VoiceMode;
   high_contrast: boolean;
   font_size: string;
+}
+
+export interface HistoryCreateItem {
+  category: string;
+  category_ru: string;
+  product_detail: string | null;
+  confidence: number;
 }
 
 export interface Detection {
@@ -81,6 +91,14 @@ export const api = {
     return request<AnalyzeResult>("/api/analyze", {
       method: "POST",
       body: formData,
+    });
+  },
+
+  async saveHistory(items: HistoryCreateItem[]): Promise<ScanHistoryItem[]> {
+    return request<ScanHistoryItem[]>("/api/history", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(items),
     });
   },
 

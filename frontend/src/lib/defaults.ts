@@ -6,6 +6,7 @@ export const DEFAULT_USER_SETTINGS = {
   language: "ru",
   voice_enabled: true,
   voice_speed: 1.0,
+  voice_mode: "product" as "product" | "department",
   high_contrast: true,
   font_size: "large",
 } as const;

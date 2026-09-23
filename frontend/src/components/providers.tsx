@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useContext, useEffect, type ReactNode } from "react";
+import { createContext, useContext, useEffect, useMemo, type ReactNode } from "react";
 import { ThemeProvider } from "next-themes";
 import { useSettings } from "@/hooks/useSettings";
 import { getDictionary, type Locale } from "@/i18n";
@@ -24,7 +24,7 @@ export function useApp() {
 
 export function AppProvider({ children }: { children: ReactNode }) {
   const { settings, loading, updateSettings, locale } = useSettings();
-  const dict = getDictionary(locale);
+  const dict = useMemo(() => getDictionary(locale), [locale]);
 
   useEffect(() => {
     const html = document.documentElement;
@@ -36,11 +36,14 @@ export function AppProvider({ children }: { children: ReactNode }) {
     html.classList.toggle("high-contrast", settings.high_contrast);
   }, [settings.high_contrast]);
 
+  const value = useMemo(
+    () => ({ settings, locale, dict, updateSettings, loading }),
+    [settings, locale, dict, updateSettings, loading],
+  );
+
   return (
     <ThemeProvider attribute="class" defaultTheme="dark" enableSystem={false}>
-      <AppContext.Provider value={{ settings, locale, dict, updateSettings, loading }}>
-        {children}
-      </AppContext.Provider>
+      <AppContext.Provider value={value}>{children}</AppContext.Provider>
     </ThemeProvider>
   );
 }

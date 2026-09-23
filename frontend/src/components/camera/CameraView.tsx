@@ -117,6 +117,7 @@ export function CameraView() {
   useEffect(() => {
     if (!isStreaming) return;
     let active = true;
+    announcedRef.current.clear();
 
     const loop = async () => {
       while (active) {
@@ -160,14 +161,22 @@ export function CameraView() {
           setLastInferenceMs(typeof result.inference_ms === "number" ? result.inference_ms : null);
 
           for (const det of result.detections) {
-            if (!announcedRef.current.has(det.product)) {
-              announcedRef.current.add(det.product);
+            const mode = settings.voice_mode === "department" ? "department" : "product";
+            const announceKey =
+              mode === "department" ? `dept:${det.category}` : `prod:${det.product}`;
+
+            if (!announcedRef.current.has(announceKey)) {
+              announcedRef.current.add(announceKey);
               const text =
-                locale === "ru"
-                  ? `${det.product_ru}. ${det.category_ru}.`
-                  : `${det.product}. ${det.category}.`;
+                mode === "department"
+                  ? locale === "ru"
+                    ? det.category_ru
+                    : det.category
+                  : locale === "ru"
+                    ? det.product_ru
+                    : det.product;
               speak(text);
-              setTimeout(() => announcedRef.current.delete(det.product), 8000);
+              setTimeout(() => announcedRef.current.delete(announceKey), 8000);
             }
           }
         } catch (e) {
@@ -189,33 +198,35 @@ export function CameraView() {
     return () => {
       active = false;
     };
-  }, [isStreaming, locale, speak]);
+  }, [isStreaming, locale, speak, settings.voice_mode]);
 
   const handleSave = useCallback(async () => {
     if (detections.length === 0) return;
-    const video = videoRef.current;
-    const canvas = captureCanvasRef.current;
-    if (!video || !canvas) return;
 
-    canvas.width = video.videoWidth || 640;
-    canvas.height = video.videoHeight || 480;
-    const ctx = canvas.getContext("2d");
-    if (!ctx) return;
-    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+    // Deduplicate by product name, keep highest confidence
+    const byProduct = new Map<string, (typeof detections)[number]>();
+    for (const det of detections) {
+      const prev = byProduct.get(det.product);
+      if (!prev || det.confidence > prev.confidence) {
+        byProduct.set(det.product, det);
+      }
+    }
 
-    const blob = await new Promise<Blob | null>((resolve) =>
-      canvas.toBlob((b) => resolve(b), "image/jpeg", 0.85),
-    );
-    if (!blob) return;
+    const items = [...byProduct.values()].map((det) => ({
+      category: det.category,
+      category_ru: det.category_ru,
+      product_detail: locale === "ru" ? det.product_ru : det.product,
+      confidence: det.confidence,
+    }));
 
     try {
-      await api.analyze(blob);
+      await api.saveHistory(items);
       setSaved(true);
       setTimeout(() => setSaved(false), 2000);
     } catch {
       /* ignore */
     }
-  }, [detections]);
+  }, [detections, locale]);
 
   const containerW = layoutSize.w;
   const containerH = layoutSize.h;
