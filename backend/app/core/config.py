@@ -3,7 +3,7 @@ from pathlib import Path
 
 
 class Settings(BaseSettings):
-    APP_NAME: str = "ShopSee API"
+    APP_NAME: str = "VoiceShop API"
     DEBUG: bool = True
     DATABASE_URL: str = f"sqlite+aiosqlite:///{Path(__file__).resolve().parent.parent.parent / 'shopsee.db'}"
     CORS_ORIGINS: list[str] = [

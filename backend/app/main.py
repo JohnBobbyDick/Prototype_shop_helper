@@ -20,14 +20,14 @@ async def lifespan(app: FastAPI):
     try:
         from app.services.detector import ProductDetector
 
-        print("[ShopSee] Loading YOLO detection model...")
+        print("[VoiceShop] Loading YOLO detection model...")
         app.state.detector = ProductDetector()
-        print("[ShopSee] Detection model READY")
+        print("[VoiceShop] Detection model READY")
     except Exception:
         import traceback
 
         traceback.print_exc()
-        print("[ShopSee] ERROR: Could not load detection model")
+        print("[VoiceShop] ERROR: Could not load detection model")
         app.state.detector = None
 
     yield

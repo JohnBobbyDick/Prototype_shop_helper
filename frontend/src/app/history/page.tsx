@@ -238,22 +238,40 @@ export default function HistoryPage() {
                         whiteSpace: "nowrap",
                       }}
                     >
-                      {item.product_detail ||
-                        (locale === "ru" ? item.category_ru : item.category)}
+                      {settings.voice_mode === "department"
+                        ? locale === "ru"
+                          ? item.category_ru
+                          : item.category
+                        : item.product_detail ||
+                          (locale === "ru" ? item.category_ru : item.category)}
                     </p>
-                    {item.product_detail && (
-                      <p
-                        style={{
-                          fontSize: s(13),
-                          color: "oklch(0.5 0 0)",
-                          overflow: "hidden",
-                          textOverflow: "ellipsis",
-                          whiteSpace: "nowrap",
-                        }}
-                      >
-                        {locale === "ru" ? item.category_ru : item.category}
-                      </p>
-                    )}
+                    {settings.voice_mode === "department"
+                      ? item.product_detail && (
+                          <p
+                            style={{
+                              fontSize: s(13),
+                              color: "oklch(0.5 0 0)",
+                              overflow: "hidden",
+                              textOverflow: "ellipsis",
+                              whiteSpace: "nowrap",
+                            }}
+                          >
+                            {item.product_detail}
+                          </p>
+                        )
+                      : item.product_detail && (
+                          <p
+                            style={{
+                              fontSize: s(13),
+                              color: "oklch(0.5 0 0)",
+                              overflow: "hidden",
+                              textOverflow: "ellipsis",
+                              whiteSpace: "nowrap",
+                            }}
+                          >
+                            {locale === "ru" ? item.category_ru : item.category}
+                          </p>
+                        )}
                     <div
                       style={{
                         display: "flex",

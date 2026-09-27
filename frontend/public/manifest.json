@@ -1,6 +1,6 @@
 {
-  "name": "ShopSee — Помощник в магазине",
-  "short_name": "ShopSee",
+  "name": "VoiceShop — Помощник в магазине",
+  "short_name": "VoiceShop",
   "description": "Определение категории отдела магазина через камеру для слабовидящих пользователей",
   "start_url": "/",
   "display": "standalone",

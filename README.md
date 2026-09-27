@@ -1,4 +1,4 @@
-# ShopSee
+# VoiceShop
 
 PWA для людей с нарушениями зрения: камера → категория товара → голосовое сопровождение.
 
@@ -94,12 +94,25 @@ npm install
 
 | В Git (одинаково у всех) | Только на вашем ПК |
 |--------------------------|-------------------|
-| Код, `yolov8n.pt` | `backend/shopsee.db` |
+| Код, `yolov8n.pt`, `shopsee_yolov8n.pt` | `backend/shopsee.db` |
 | Дефолты: RU, голос вкл, шрифт large, контраст — `backend/app/core/defaults.py` | История сканов, правки в UI |
 
 База создаётся сама при первом запуске бэкенда. В Git не коммитится.
 
 Сброс настроек и истории: удалить `backend/shopsee.db` → перезапустить бэкенд.
+
+### Дообучение модели (опционально)
+
+Датасет: папки `apple` / `banana` / `milk_bottle` (train/val).
+
+```powershell
+cd backend
+.\.venv\Scripts\Activate.ps1
+python scripts/prepare_dataset.py   # авторазметка + YOLO-формат
+python scripts/train.py             # fine-tune → shopsee_yolov8n.pt
+```
+
+Бэкенд сам подхватывает `shopsee_yolov8n.pt`, если файл есть; иначе — базовый COCO `yolov8n.pt`.
 
 ---
 

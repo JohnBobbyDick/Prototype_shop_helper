@@ -40,7 +40,7 @@ export function BottomNav() {
       aria-label="Main"
     >
       <div
-        className="glass-strong glass-shine"
+        className="hud"
         style={{
           margin: "0 12px 8px",
           borderRadius: 22,
@@ -72,9 +72,7 @@ export function BottomNav() {
                   cursor: "pointer",
                   textDecoration: "none",
                   transition: "color 0.2s ease-out",
-                  color: active
-                    ? "oklch(0.65 0.24 264)"
-                    : "oklch(0.45 0 0)",
+                  color: active ? "#93c5fd" : "rgba(255,255,255,0.72)",
                 }}
                 aria-current={active ? "page" : undefined}
               >
@@ -84,7 +82,7 @@ export function BottomNav() {
                       position: "absolute",
                       inset: 0,
                       borderRadius: 16,
-                      background: "oklch(0.65 0.24 264 / 10%)",
+                      background: "rgba(147, 197, 253, 0.18)",
                     }}
                   />
                 )}
@@ -95,14 +93,14 @@ export function BottomNav() {
                     width: isCenter ? 24 : 20,
                     height: isCenter ? 24 : 20,
                   }}
-                  strokeWidth={active ? 2.2 : 1.6}
+                  strokeWidth={active ? 2.4 : 1.8}
                 />
                 <span
                   style={{
                     position: "relative",
                     zIndex: 1,
                     fontSize: 10,
-                    fontWeight: active ? 600 : 500,
+                    fontWeight: active ? 700 : 600,
                     marginTop: 1,
                     letterSpacing: "0.01em",
                   }}

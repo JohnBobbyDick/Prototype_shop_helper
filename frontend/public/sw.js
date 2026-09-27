@@ -1,4 +1,4 @@
-const CACHE_NAME = "shopsee-v2";
+const CACHE_NAME = "voiceshop-v1";
 const PRECACHE_URLS = ["/manifest.json"];
 
 self.addEventListener("install", (event) => {

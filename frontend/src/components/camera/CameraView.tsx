@@ -41,6 +41,7 @@ export function CameraView() {
   const streamRef = useRef<MediaStream | null>(null);
   const announcedRef = useRef<Set<string>>(new Set());
   const busyRef = useRef(false);
+  const stableRef = useRef<{ key: string; count: number }>({ key: "", count: 0 });
 
   const [isStreaming, setIsStreaming] = useState(false);
   const [cameraError, setCameraError] = useState<string | null>(null);
@@ -66,10 +67,16 @@ export function CameraView() {
     setCameraError(null);
     setIsHttpError(false);
 
+    const host = typeof window !== "undefined" ? window.location.hostname : "";
+    const isLocalHost =
+      host === "localhost" || host === "127.0.0.1" || host === "[::1]";
+    const insecureRemote =
+      typeof window !== "undefined" &&
+      window.location.protocol === "http:" &&
+      !isLocalHost;
+
     if (typeof window !== "undefined" && !navigator.mediaDevices?.getUserMedia) {
-      const isHttp =
-        window.location.protocol === "http:" && window.location.hostname !== "localhost";
-      if (isHttp) {
+      if (insecureRemote) {
         setIsHttpError(true);
         setCameraError(
           locale === "ru" ? "Камера требует HTTPS-соединение" : "Camera requires HTTPS connection",
@@ -80,17 +87,56 @@ export function CameraView() {
       return;
     }
 
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: "environment", width: { ideal: 1280 }, height: { ideal: 720 } },
-      });
-      streamRef.current = stream;
-      if (videoRef.current) {
-        videoRef.current.srcObject = stream;
-        await videoRef.current.play();
+    if (insecureRemote) {
+      setIsHttpError(true);
+      setCameraError(
+        locale === "ru"
+          ? "Откройте http://localhost:3000 — по IP камера блокируется"
+          : "Open http://localhost:3000 — camera is blocked on LAN IP",
+      );
+      return;
+    }
+
+    const attempts: MediaStreamConstraints[] = [
+      { video: { facingMode: { ideal: "environment" }, width: { ideal: 1280 }, height: { ideal: 720 } } },
+      { video: { facingMode: { ideal: "user" }, width: { ideal: 1280 }, height: { ideal: 720 } } },
+      { video: true },
+    ];
+
+    let lastErr: unknown = null;
+    for (const constraints of attempts) {
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia(constraints);
+        streamRef.current = stream;
+        if (videoRef.current) {
+          videoRef.current.srcObject = stream;
+          await videoRef.current.play();
+        }
+        setIsStreaming(true);
+        return;
+      } catch (err) {
+        lastErr = err;
       }
-      setIsStreaming(true);
-    } catch {
+    }
+
+    const name = lastErr instanceof DOMException ? lastErr.name : "";
+    if (name === "NotAllowedError" || name === "PermissionDeniedError") {
+      setCameraError(
+        locale === "ru"
+          ? "Доступ к камере запрещён"
+          : "Camera permission denied",
+      );
+    } else if (name === "NotFoundError" || name === "DevicesNotFoundError") {
+      setCameraError(
+        locale === "ru" ? "Камера не найдена" : "No camera found",
+      );
+    } else if (name === "NotReadableError" || name === "TrackStartError") {
+      setCameraError(
+        locale === "ru"
+          ? "Камера занята другим приложением"
+          : "Camera is used by another app",
+      );
+    } else {
       setCameraError(dict.camera.cameraError);
     }
   }, [dict, locale]);
@@ -157,10 +203,26 @@ export function CameraView() {
           const result = await api.detect(blob);
           if (!active) break;
           setDetectError(null);
-          setDetections(result.detections);
           setLastInferenceMs(typeof result.inference_ms === "number" ? result.inference_ms : null);
 
-          for (const det of result.detections) {
+          // Require the same top hit on 2 frames in a row — kills one-frame head glitches
+          const top = result.detections[0];
+          const frameKey = top
+            ? `${top.product}|${top.category}`
+            : "";
+          if (frameKey && stableRef.current.key === frameKey) {
+            stableRef.current.count += 1;
+          } else {
+            stableRef.current = { key: frameKey, count: frameKey ? 1 : 0 };
+          }
+
+          const stable = Boolean(frameKey) && stableRef.current.count >= 2;
+          const shown = stable ? result.detections : [];
+          setDetections(shown);
+
+          if (!stable) continue;
+
+          for (const det of shown) {
             const mode = settings.voice_mode === "department" ? "department" : "product";
             const announceKey =
               mode === "department" ? `dept:${det.category}` : `prod:${det.product}`;
@@ -184,6 +246,7 @@ export function CameraView() {
           if (active) {
             setDetectError(msg);
             setDetections([]);
+            stableRef.current = { key: "", count: 0 };
           }
         } finally {
           busyRef.current = false;
@@ -200,10 +263,49 @@ export function CameraView() {
     };
   }, [isStreaming, locale, speak, settings.voice_mode]);
 
+  const voiceMode = settings.voice_mode === "department" ? "department" : "product";
+
+  const labelFor = useCallback(
+    (det: Detection) => {
+      if (voiceMode === "department") {
+        return locale === "ru" ? det.category_ru : det.category;
+      }
+      return locale === "ru" ? det.product_ru : det.product;
+    },
+    [voiceMode, locale],
+  );
+
   const handleSave = useCallback(async () => {
     if (detections.length === 0) return;
 
-    // Deduplicate by product name, keep highest confidence
+    const mode = settings.voice_mode === "department" ? "department" : "product";
+
+    if (mode === "department") {
+      // One history row per unique department
+      const byDept = new Map<string, (typeof detections)[number]>();
+      for (const det of detections) {
+        const prev = byDept.get(det.category);
+        if (!prev || det.confidence > prev.confidence) {
+          byDept.set(det.category, det);
+        }
+      }
+      const items = [...byDept.values()].map((det) => ({
+        category: det.category,
+        category_ru: det.category_ru,
+        product_detail: null as string | null,
+        confidence: det.confidence,
+      }));
+      try {
+        await api.saveHistory(items);
+        setSaved(true);
+        setTimeout(() => setSaved(false), 2000);
+      } catch {
+        /* ignore */
+      }
+      return;
+    }
+
+    // Product mode: one row per unique product
     const byProduct = new Map<string, (typeof detections)[number]>();
     for (const det of detections) {
       const prev = byProduct.get(det.product);
@@ -226,7 +328,7 @@ export function CameraView() {
     } catch {
       /* ignore */
     }
-  }, [detections, locale]);
+  }, [detections, locale, settings.voice_mode]);
 
   const containerW = layoutSize.w;
   const containerH = layoutSize.h;
@@ -279,9 +381,11 @@ export function CameraView() {
           <p style={{ fontSize: 14, maxWidth: 300, color: "oklch(0.5 0 0)" }}>
             {isHttpError
               ? locale === "ru"
-                ? "Откройте через HTTPS или localhost"
-                : "Open via HTTPS or localhost"
-              : dict.camera.cameraPermission}
+                ? "Откройте именно http://localhost:3000 (не IP из сети)"
+                : "Open http://localhost:3000 (not the network IP)"
+              : locale === "ru"
+                ? "В браузере: значок замка → Камера → Разрешить. Закройте Zoom/Teams, если камера занята."
+                : "In the browser: lock icon → Camera → Allow. Close Zoom/Teams if the camera is busy."}
           </p>
         </motion.div>
         {!isHttpError && (
@@ -350,7 +454,7 @@ export function CameraView() {
         }}
       >
         <div
-          className="glass glass-shine"
+          className="hud"
           style={{
             display: "inline-flex",
             alignItems: "center",
@@ -360,15 +464,15 @@ export function CameraView() {
             pointerEvents: "auto",
           }}
         >
-          <ScanLine style={{ width: 15, height: 15, color: "oklch(0.65 0.24 264)" }} strokeWidth={2.4} />
-          <span style={{ fontSize: 13, fontWeight: 700, color: "white", letterSpacing: "-0.01em" }}>
-            ShopSee
+          <ScanLine style={{ width: 15, height: 15, color: "#93c5fd" }} strokeWidth={2.4} />
+          <span style={{ fontSize: 13, fontWeight: 800, color: "#fff", letterSpacing: "-0.01em" }}>
+            VoiceShop
           </span>
         </div>
 
         {/* Статус детекции: не мигаем «0ms» — показываем последний удачный latency */}
         <div
-          className="glass"
+          className="hud"
           style={{
             display: "inline-flex",
             alignItems: "center",
@@ -384,7 +488,7 @@ export function CameraView() {
               width: 6,
               height: 6,
               borderRadius: "50%",
-              background: detectError ? "#f87171" : detecting ? "#4ade80" : "rgba(255,255,255,0.35)",
+              background: detectError ? "#f87171" : detecting ? "#4ade80" : "rgba(255,255,255,0.45)",
               boxShadow: detecting ? "0 0 6px #4ade80" : "none",
               flexShrink: 0,
             }}
@@ -392,8 +496,8 @@ export function CameraView() {
           <span
             style={{
               fontSize: 10,
-              fontWeight: 600,
-              color: "rgba(255,255,255,0.75)",
+              fontWeight: 700,
+              color: "#fff",
               overflow: "hidden",
               textOverflow: "ellipsis",
               whiteSpace: "nowrap",
@@ -444,11 +548,11 @@ export function CameraView() {
                   display: "flex",
                   alignItems: "center",
                   gap: 6,
-                  padding: "4px 10px",
+                  padding: "5px 10px",
                   borderRadius: 8,
-                  background: "rgba(0,0,0,0.75)",
-                  backdropFilter: "blur(8px)",
-                  WebkitBackdropFilter: "blur(8px)",
+                  background: "rgba(0,0,0,0.88)",
+                  border: "1px solid rgba(255,255,255,0.25)",
+                  boxShadow: "0 2px 10px rgba(0,0,0,0.55)",
                   whiteSpace: "nowrap",
                 }}
               >
@@ -462,7 +566,7 @@ export function CameraView() {
                   }}
                 />
                 <span style={{ fontSize: 12, fontWeight: 700, color: "white" }}>
-                  {locale === "ru" ? det.product_ru : det.product}
+                  {labelFor(det)}
                 </span>
                 <span style={{ fontSize: 10, fontWeight: 600, color: "rgba(255,255,255,0.5)" }}>
                   {det.confidence}%
@@ -492,9 +596,13 @@ export function CameraView() {
           <p
             style={{
               fontSize: 13,
-              fontWeight: 500,
-              color: "rgba(255,255,255,0.55)",
-              textShadow: "0 1px 6px rgba(0,0,0,0.6)",
+              fontWeight: 700,
+              color: "#fff",
+              background: "rgba(0,0,0,0.72)",
+              border: "1px solid rgba(255,255,255,0.22)",
+              borderRadius: 10,
+              padding: "8px 14px",
+              textShadow: "0 1px 3px rgba(0,0,0,0.9)",
               textAlign: "center",
             }}
           >
@@ -504,28 +612,48 @@ export function CameraView() {
 
         {detections.length > 0 && (
           <div
-            className="glass glass-shine"
+            className="hud"
             style={{
               display: "flex",
               alignItems: "center",
               gap: 10,
               borderRadius: 16,
-              padding: "8px 14px",
+              padding: "10px 14px",
               pointerEvents: "auto",
               maxWidth: 360,
               width: "100%",
             }}
           >
             <div style={{ flex: 1, minWidth: 0 }}>
-              <p style={{ fontSize: 12, fontWeight: 700, color: "white" }}>
-                {detections.map((d) => (locale === "ru" ? d.product_ru : d.product)).join(", ")}
+              <p style={{ fontSize: 13, fontWeight: 800, color: "#fff" }}>
+                {voiceMode === "department"
+                  ? [
+                      ...new Set(
+                        detections.map((d) =>
+                          locale === "ru" ? d.category_ru : d.category,
+                        ),
+                      ),
+                    ].join(", ")
+                  : detections
+                      .map((d) => (locale === "ru" ? d.product_ru : d.product))
+                      .join(", ")}
               </p>
-              <p style={{ fontSize: 10, color: "rgba(255,255,255,0.45)", marginTop: 1 }}>
-                {detections
-                  .map((d) => (locale === "ru" ? d.category_ru : d.category))
-                  .filter((v, i, a) => a.indexOf(v) === i)
-                  .join(" · ")}
-              </p>
+              {voiceMode === "product" && (
+                <p style={{ fontSize: 11, color: "rgba(255,255,255,0.78)", marginTop: 2, fontWeight: 600 }}>
+                  {detections
+                    .map((d) => (locale === "ru" ? d.category_ru : d.category))
+                    .filter((v, i, a) => a.indexOf(v) === i)
+                    .join(" · ")}
+                </p>
+              )}
+              {voiceMode === "department" && (
+                <p style={{ fontSize: 11, color: "rgba(255,255,255,0.78)", marginTop: 2, fontWeight: 600 }}>
+                  {detections
+                    .map((d) => (locale === "ru" ? d.product_ru : d.product))
+                    .filter((v, i, a) => a.indexOf(v) === i)
+                    .join(" · ")}
+                </p>
+              )}
             </div>
             <motion.button
               whileTap={{ scale: 0.93 }}
