@@ -22,7 +22,7 @@ async def lifespan(app: FastAPI):
 
         print("[VoiceShop] Loading YOLO detection model...")
         app.state.detector = ProductDetector()
-        print("[VoiceShop] Detection model READY")
+        print(f"[VoiceShop] Detection model READY (custom={app.state.detector.custom})")
     except Exception:
         import traceback
 

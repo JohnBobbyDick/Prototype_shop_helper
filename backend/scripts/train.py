@@ -1,9 +1,11 @@
 """
-Fine-tune YOLOv8n on clean ShopSee labels (no full-frame junk boxes).
+Fine-tune YOLOv8n for VoiceShop (products + negatives).
 
-Usage (from backend/):
+Local CPU (slow):
   .venv\\Scripts\\python scripts/prepare_dataset.py
   .venv\\Scripts\\python scripts/train.py
+
+Prefer Google Colab GPU — see scripts/colab_train.ipynb
 """
 
 from __future__ import annotations
@@ -21,58 +23,44 @@ OUT_WEIGHTS = ROOT / "shopsee_yolov8n.pt"
 
 def main() -> None:
     if not DATA_YAML.exists():
-        raise SystemExit(
-            f"Missing {DATA_YAML}. Run: python scripts/prepare_dataset.py"
-        )
+        raise SystemExit("Run prepare_dataset.py first")
 
     weights = str(BASE_WEIGHTS) if BASE_WEIGHTS.exists() else "yolov8n.pt"
-    print(f"Base weights: {weights}")
-    print(f"Dataset: {DATA_YAML}")
+    print(f"Base: {weights}")
+    print(f"Data: {DATA_YAML}")
 
     model = YOLO(weights)
-    results = model.train(
+    model.train(
         data=str(DATA_YAML),
-        epochs=60,
+        epochs=50,
         imgsz=416,
         batch=4,
         device="cpu",
         workers=0,
         project=str(ROOT / "runs"),
-        name="shopsee_v2",
+        name="voiceshop",
         exist_ok=True,
-        patience=18,
-        # keep COCO features that separate person vs fruit
+        patience=15,
         freeze=10,
-        lr0=0.005,
-        lrf=0.01,
+        lr0=0.004,
         optimizer="AdamW",
         cos_lr=True,
-        # milder aug — less "whole frame is object" nonsense
-        mosaic=0.15,
+        mosaic=0.1,
         mixup=0.0,
         copy_paste=0.0,
-        close_mosaic=20,
+        close_mosaic=15,
         degrees=5,
         translate=0.05,
         scale=0.2,
         fliplr=0.5,
-        hsv_h=0.01,
-        hsv_s=0.4,
-        hsv_v=0.3,
-        box=7.5,
-        cls=1.0,
         verbose=True,
     )
 
-    best = ROOT / "runs" / "shopsee_v2" / "weights" / "best.pt"
+    best = ROOT / "runs" / "voiceshop" / "weights" / "best.pt"
     if not best.exists():
-        best = ROOT / "runs" / "detect" / "shopsee_v2" / "weights" / "best.pt"
-    if not best.exists():
-        raise SystemExit(f"best.pt not found under {ROOT / 'runs'}")
-
+        raise SystemExit(f"best.pt not found at {best}")
     shutil.copy2(best, OUT_WEIGHTS)
-    print(f"Copied best weights -> {OUT_WEIGHTS}")
-    print(results)
+    print(f"Copied -> {OUT_WEIGHTS}")
 
 
 if __name__ == "__main__":

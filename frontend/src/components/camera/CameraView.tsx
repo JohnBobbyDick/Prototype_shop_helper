@@ -41,7 +41,6 @@ export function CameraView() {
   const streamRef = useRef<MediaStream | null>(null);
   const announcedRef = useRef<Set<string>>(new Set());
   const busyRef = useRef(false);
-  const stableRef = useRef<{ key: string; count: number }>({ key: "", count: 0 });
 
   const [isStreaming, setIsStreaming] = useState(false);
   const [cameraError, setCameraError] = useState<string | null>(null);
@@ -203,26 +202,10 @@ export function CameraView() {
           const result = await api.detect(blob);
           if (!active) break;
           setDetectError(null);
+          setDetections(result.detections);
           setLastInferenceMs(typeof result.inference_ms === "number" ? result.inference_ms : null);
 
-          // Require the same top hit on 2 frames in a row — kills one-frame head glitches
-          const top = result.detections[0];
-          const frameKey = top
-            ? `${top.product}|${top.category}`
-            : "";
-          if (frameKey && stableRef.current.key === frameKey) {
-            stableRef.current.count += 1;
-          } else {
-            stableRef.current = { key: frameKey, count: frameKey ? 1 : 0 };
-          }
-
-          const stable = Boolean(frameKey) && stableRef.current.count >= 2;
-          const shown = stable ? result.detections : [];
-          setDetections(shown);
-
-          if (!stable) continue;
-
-          for (const det of shown) {
+          for (const det of result.detections) {
             const mode = settings.voice_mode === "department" ? "department" : "product";
             const announceKey =
               mode === "department" ? `dept:${det.category}` : `prod:${det.product}`;
@@ -246,7 +229,6 @@ export function CameraView() {
           if (active) {
             setDetectError(msg);
             setDetections([]);
-            stableRef.current = { key: "", count: 0 };
           }
         } finally {
           busyRef.current = false;

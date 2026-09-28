@@ -42,12 +42,12 @@ yarn-error.log*
 *.sqlite3
 backend/uploads/
 
-# Training data & runs (keep shopsee_yolov8n.pt committed after fine-tune)
+# Training data & runs (optional local experiments)
 backend/datasets/raw/
 backend/datasets/yolo/
 backend/runs/
 
-# YOLO weights: commit backend/yolov8n.pt and backend/shopsee_yolov8n.pt
+# YOLO weights: commit backend/yolov8n.pt for offline setup, or omit and let ultralytics download on first run
 # *.pt
 
 # OS
